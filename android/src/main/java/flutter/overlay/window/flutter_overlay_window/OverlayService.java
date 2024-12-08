@@ -97,7 +97,7 @@ public class OverlayService extends Service implements View.OnTouchListener {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+  public int onStartCommand(Intent intent, int flags, int startId) {
     boolean blurBackground = intent.getBooleanExtra("blurBackground", false);
 
     // Arka plan ve overlay için bir FrameLayout oluşturun
@@ -153,7 +153,7 @@ public class OverlayService extends Service implements View.OnTouchListener {
     // Blur view ve flutterView'ı overlayContainer'a ekle
     overlayContainer.addView(blurView);
     overlayContainer.addView(flutterView);
-    
+
     flutterChannel.setMethodCallHandler((call, result) -> {
         if (call.method.equals("updateFlag")) {
             String flag = call.argument("flag").toString();
@@ -191,7 +191,7 @@ public class OverlayService extends Service implements View.OnTouchListener {
     int dx = startX == OverlayConstants.DEFAULT_XY ? 0 : startX;
     int dy = startY == OverlayConstants.DEFAULT_XY ? -statusBarHeightPx() : startY;
 
-    // Layout parametrelerini oluştur
+    // WindowManager.LayoutParams kullanarak parametreleri oluştur
     WindowManager.LayoutParams params = new WindowManager.LayoutParams(
             WindowSetup.width == -1999 ? -1 : WindowSetup.width,
             WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
@@ -215,12 +215,13 @@ public class OverlayService extends Service implements View.OnTouchListener {
 
     // overlayContainer'ı WindowManager'a ekle
     windowManager.addView(overlayContainer, params);
-    
+
     // Overlay pozisyonunu ayarla
     moveOverlay(dx, dy, null);
 
     return START_STICKY;
 }
+
 
 
 

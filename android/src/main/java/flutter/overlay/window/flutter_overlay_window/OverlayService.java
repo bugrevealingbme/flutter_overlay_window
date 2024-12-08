@@ -177,7 +177,7 @@ public class OverlayService extends Service implements View.OnTouchListener {
         // Arka plan bulanıklığı uygulama
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
             RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
-            windowView.setRenderEffect(blurEffect);
+            flutterView.setRenderEffect(blurEffect);
         }
         params.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);

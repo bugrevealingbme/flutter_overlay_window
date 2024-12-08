@@ -78,6 +78,7 @@ public class FlutterOverlayWindowPlugin implements
                 result.error("PERMISSION", "overlay permission is not enabled", null);
                 return;
             }
+            boolean blurBackground = call.argument("blurBackground");
             Integer height = call.argument("height");
             Integer width = call.argument("width");
             String alignment = call.argument("alignment");
@@ -107,6 +108,7 @@ public class FlutterOverlayWindowPlugin implements
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             intent.putExtra("startX", startX);
             intent.putExtra("startY", startY);
+            intent.putExtra("blurBackground", blurBackground);
             context.startService(intent);
             result.success(null);
         } else if (call.method.equals("isOverlayActive")) {

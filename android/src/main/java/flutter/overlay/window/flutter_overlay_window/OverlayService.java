@@ -98,6 +98,21 @@ public class OverlayService extends Service implements View.OnTouchListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean blurBackground = intent.getBooleanExtra("blurBackground", false);
 
+         // Arka plan ve overlay için bir FrameLayout oluşturun
+        FrameLayout overlayContainer = new FrameLayout(getApplicationContext());
+        
+        // Bulanıklaştırılmış arka plan view
+        View blurView = new View(getApplicationContext());
+        blurView.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
+            RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
+            blurView.setRenderEffect(blurEffect);
+        }
+        
         mResources = getApplicationContext().getResources();
         int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
         int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
@@ -128,6 +143,10 @@ public class OverlayService extends Service implements View.OnTouchListener {
         flutterView.setFocusable(true);
         flutterView.setFocusableInTouchMode(true);
         flutterView.setBackgroundColor(Color.TRANSPARENT);
+
+        overlayContainer.addView(blurView);
+        overlayContainer.addView(flutterView);
+        
         flutterChannel.setMethodCallHandler((call, result) -> {
             if (call.method.equals("updateFlag")) {
                 String flag = call.argument("flag").toString();
@@ -174,11 +193,7 @@ public class OverlayService extends Service implements View.OnTouchListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
             params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
         }
-        // Arka plan bulanıklığı uygulama
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
-            RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
-            flutterView.setRenderEffect(blurEffect);
-        }
+
         params.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);
         windowManager.addView(flutterView, params);

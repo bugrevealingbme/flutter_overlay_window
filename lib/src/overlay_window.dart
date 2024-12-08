@@ -48,12 +48,14 @@ class FlutterOverlayWindow {
     String overlayTitle = "overlay activated",
     String? overlayContent,
     bool enableDrag = false,
+    bool blurBackground = true,
     PositionGravity positionGravity = PositionGravity.none,
     OverlayPosition? startPosition,
   }) async {
     await _channel.invokeMethod(
       'showOverlay',
       {
+        "blurBackground": blurBackground,
         "height": height,
         "width": width,
         "alignment": alignment.name,

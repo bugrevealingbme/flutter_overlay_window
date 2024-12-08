@@ -94,6 +94,8 @@ public class OverlayService extends Service implements View.OnTouchListener {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        boolean blurBackground = intent.getBooleanExtra("blurBackground", false);
+
         mResources = getApplicationContext().getResources();
         int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
         int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
@@ -169,6 +171,11 @@ public class OverlayService extends Service implements View.OnTouchListener {
         );
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
             params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+        }
+        // Arka plan bulanıklığı uygulama
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
+            RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
+            windowView.setRenderEffect(blurEffect);
         }
         params.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);

@@ -23,6 +23,8 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;

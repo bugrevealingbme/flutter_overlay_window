@@ -98,110 +98,130 @@ public class OverlayService extends Service implements View.OnTouchListener {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        boolean blurBackground = intent.getBooleanExtra("blurBackground", false);
+    boolean blurBackground = intent.getBooleanExtra("blurBackground", false);
 
-         // Arka plan ve overlay için bir FrameLayout oluşturun
-        FrameLayout overlayContainer = new FrameLayout(getApplicationContext());
-        
-        // Bulanıklaştırılmış arka plan view
-        View blurView = new View(getApplicationContext());
-        blurView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-        ));
+    // Arka plan ve overlay için bir FrameLayout oluşturun
+    FrameLayout overlayContainer = new FrameLayout(getApplicationContext());
+    
+    // Bulanıklaştırılmış arka plan view
+    View blurView = new View(getApplicationContext());
+    blurView.setLayoutParams(new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+    ));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
-            RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
-            blurView.setRenderEffect(blurEffect);
-        }
-        
-        mResources = getApplicationContext().getResources();
-        int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
-        int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
-        boolean isCloseWindow = intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
-        if (isCloseWindow) {
-            if (windowManager != null) {
-                windowManager.removeView(flutterView);
-                windowManager = null;
-                flutterView.detachFromFlutterEngine();
-                stopSelf();
-            }
-            isRunning = false;
-            return START_STICKY;
-        }
-        if (windowManager != null) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBackground) {
+        RenderEffect blurEffect = RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP);
+        blurView.setRenderEffect(blurEffect);
+    }
+    
+    mResources = getApplicationContext().getResources();
+    int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
+    int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
+    boolean isCloseWindow = intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
+    
+    // Eğer pencereyi kapatma isteği varsa
+    if (isCloseWindow) {
+        if (windowManager != null && flutterView != null) {
             windowManager.removeView(flutterView);
-            windowManager = null;
             flutterView.detachFromFlutterEngine();
+            flutterView = null;
             stopSelf();
         }
-        isRunning = true;
-        Log.d("onStartCommand", "Service started");
-        FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
-        engine.getLifecycleChannel().appIsResumed();
-        flutterView = new FlutterView(getApplicationContext(), new FlutterTextureView(getApplicationContext()));
-        flutterView.attachToFlutterEngine(FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG));
-        flutterView.setFitsSystemWindows(true);
-        flutterView.setFocusable(true);
-        flutterView.setFocusableInTouchMode(true);
-        flutterView.setBackgroundColor(Color.TRANSPARENT);
-
-        overlayContainer.addView(blurView);
-        overlayContainer.addView(flutterView);
-        
-        flutterChannel.setMethodCallHandler((call, result) -> {
-            if (call.method.equals("updateFlag")) {
-                String flag = call.argument("flag").toString();
-                updateOverlayFlag(result, flag);
-            } else if (call.method.equals("updateOverlayPosition")) {
-                int x = call.<Integer>argument("x");
-                int y = call.<Integer>argument("y");
-                moveOverlay(x, y, result);
-            } else if (call.method.equals("resizeOverlay")) {
-                int width = call.argument("width");
-                int height = call.argument("height");
-                boolean enableDrag = call.argument("enableDrag");
-                resizeOverlay(width, height, enableDrag, result);
-            }
-        });
-        overlayMessageChannel.setMessageHandler((message, reply) -> {
-            WindowSetup.messenger.send(message);
-        });
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            windowManager.getDefaultDisplay().getSize(szWindow);
-        } else {
-            DisplayMetrics displaymetrics = new DisplayMetrics();
-            windowManager.getDefaultDisplay().getMetrics(displaymetrics);
-            int w = displaymetrics.widthPixels;
-            int h = displaymetrics.heightPixels;
-            szWindow.set(w, h);
-        }
-        int dx = startX == OverlayConstants.DEFAULT_XY ? 0 : startX;
-        int dy = startY == OverlayConstants.DEFAULT_XY ? -statusBarHeightPx() : startY;
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowSetup.width == -1999 ? -1 : WindowSetup.width,
-                WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
-                0,
-                -statusBarHeightPx(),
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
-                WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
-                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                PixelFormat.TRANSLUCENT
-        );
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
-            params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
-        }
-
-        params.gravity = WindowSetup.gravity;
-        flutterView.setOnTouchListener(this);
-        windowManager.addView(flutterView, params);
-        moveOverlay(dx, dy, null);
+        isRunning = false;
         return START_STICKY;
     }
+
+    if (windowManager != null && flutterView != null) {
+        windowManager.removeView(flutterView);
+        flutterView.detachFromFlutterEngine();
+    }
+
+    isRunning = true;
+    Log.d("onStartCommand", "Service started");
+
+    // Flutter motorunu başlat
+    FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
+    engine.getLifecycleChannel().appIsResumed();
+    flutterView = new FlutterView(getApplicationContext(), new FlutterTextureView(getApplicationContext()));
+    flutterView.attachToFlutterEngine(engine);
+    flutterView.setFitsSystemWindows(true);
+    flutterView.setFocusable(true);
+    flutterView.setFocusableInTouchMode(true);
+    flutterView.setBackgroundColor(Color.TRANSPARENT);
+
+    // Blur view ve flutterView'ı overlayContainer'a ekle
+    overlayContainer.addView(blurView);
+    overlayContainer.addView(flutterView);
+    
+    flutterChannel.setMethodCallHandler((call, result) -> {
+        if (call.method.equals("updateFlag")) {
+            String flag = call.argument("flag").toString();
+            updateOverlayFlag(result, flag);
+        } else if (call.method.equals("updateOverlayPosition")) {
+            int x = call.<Integer>argument("x");
+            int y = call.<Integer>argument("y");
+            moveOverlay(x, y, result);
+        } else if (call.method.equals("resizeOverlay")) {
+            int width = call.argument("width");
+            int height = call.argument("height");
+            boolean enableDrag = call.argument("enableDrag");
+            resizeOverlay(width, height, enableDrag, result);
+        }
+    });
+
+    overlayMessageChannel.setMessageHandler((message, reply) -> {
+        WindowSetup.messenger.send(message);
+    });
+
+    windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+    // Ekran boyutlarını almak
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        windowManager.getDefaultDisplay().getSize(szWindow);
+    } else {
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(displaymetrics);
+        int w = displaymetrics.widthPixels;
+        int h = displaymetrics.heightPixels;
+        szWindow.set(w, h);
+    }
+
+    // Başlangıç X ve Y pozisyonlarını ayarla
+    int dx = startX == OverlayConstants.DEFAULT_XY ? 0 : startX;
+    int dy = startY == OverlayConstants.DEFAULT_XY ? -statusBarHeightPx() : startY;
+
+    // Layout parametrelerini oluştur
+    WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+            WindowSetup.width == -1999 ? -1 : WindowSetup.width,
+            WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
+            0,
+            -statusBarHeightPx(),
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
+            WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                    | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            PixelFormat.TRANSLUCENT
+    );
+
+    // Android S ve sonrası için opaklık ayarları
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
+        params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+    }
+
+    params.gravity = WindowSetup.gravity;
+    flutterView.setOnTouchListener(this);
+
+    // overlayContainer'ı WindowManager'a ekle
+    windowManager.addView(overlayContainer, params);
+    
+    // Overlay pozisyonunu ayarla
+    moveOverlay(dx, dy, null);
+
+    return START_STICKY;
+}
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)

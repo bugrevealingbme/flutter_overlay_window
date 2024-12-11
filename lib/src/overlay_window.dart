@@ -93,12 +93,12 @@ class FlutterOverlayWindow {
 
   /// isAccessibilityPermissionGranted
   static Future<bool> isAccessibilityPermissionGranted() async {
-    return await _methodChannel.invokeMethod<bool>('checkAccessibilityPermission') ?? false;
+    return await _channel.invokeMethod<bool>('checkAccessibilityPermission') ?? false;
   }
 
   /// requestAccessibilityPermission
   static Future<void> requestAccessibilityPermission() async {
-    await _methodChannel.invokeMethod('requestAccessibilityPermission');
+    await _channel.invokeMethod('requestAccessibilityPermission');
   }
   
   /// Closes overlay if open

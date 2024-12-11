@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.List;
+import java.util.ArrayList;
 
 import io.flutter.embedding.android.FlutterTextureView;
 import io.flutter.embedding.android.FlutterView;
@@ -81,62 +83,12 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             final int eventType = accessibilityEvent.getEventType();
             AccessibilityNodeInfo parentNodeInfo = accessibilityEvent.getSource();
             AccessibilityWindowInfo windowInfo = null;
-            List<String> nextTexts = new ArrayList<>();
-            List<Integer> actions = new ArrayList<>();
-            List<HashMap<String, Object>> subNodeActions = new ArrayList<>();
-            HashSet<AccessibilityNodeInfo> traversedNodes = new HashSet<>();
-            HashMap<String, Object> data = new HashMap<>();
-            if (parentNodeInfo == null) {
-                return;
-            }
-            String nodeId = generateNodeId(parentNodeInfo);
-            String packageName = parentNodeInfo.getPackageName().toString();
-            storeNode(nodeId, parentNodeInfo);
+           
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 windowInfo = parentNodeInfo.getWindow();
             }
 
-
             Intent intent = new Intent(ACCESSIBILITY_INTENT);
-
-            data.put("mapId", nodeId);
-            data.put("packageName", packageName);
-            data.put("eventType", eventType);
-            data.put("actionType", accessibilityEvent.getAction());
-            data.put("eventTime", accessibilityEvent.getEventTime());
-            data.put("movementGranularity", accessibilityEvent.getMovementGranularity());
-            Rect rect = new Rect();
-            parentNodeInfo.getBoundsInScreen(rect);
-            data.put("screenBounds", getBoundingPoints(rect));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                data.put("contentChangeTypes", accessibilityEvent.getContentChangeTypes());
-            }
-            if (parentNodeInfo.getText() != null) {
-                data.put("capturedText", parentNodeInfo.getText().toString());
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                data.put("nodeId", parentNodeInfo.getViewIdResourceName());
-            }
-            getSubNodes(parentNodeInfo, subNodeActions, traversedNodes);
-            data.put("nodesText", nextTexts);
-            actions.addAll(parentNodeInfo.getActionList().stream().map(AccessibilityNodeInfo.AccessibilityAction::getId).collect(Collectors.toList()));
-            data.put("parentActions", actions);
-            data.put("subNodesActions", subNodeActions);
-            data.put("isClickable", parentNodeInfo.isClickable());
-            data.put("isScrollable", parentNodeInfo.isScrollable());
-            data.put("isFocusable", parentNodeInfo.isFocusable());
-            data.put("isCheckable", parentNodeInfo.isCheckable());
-            data.put("isLongClickable", parentNodeInfo.isLongClickable());
-            data.put("isEditable", parentNodeInfo.isEditable());
-            if (windowInfo != null) {
-                data.put("isActive", windowInfo.isActive());
-                data.put("isFocused", windowInfo.isFocused());
-                data.put("windowType", windowInfo.getType());
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    data.put("isPip", windowInfo.isInPictureInPictureMode());
-                }
-            }
-            storeToSharedPrefs(data);
             intent.putExtra(SEND_BROADCAST, true);
             sendBroadcast(intent);
         } catch (Exception ex) {

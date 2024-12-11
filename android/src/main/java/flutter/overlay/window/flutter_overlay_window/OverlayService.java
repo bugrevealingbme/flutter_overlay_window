@@ -84,13 +84,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         // Servis kesintiye uğradığında yapılacak işlemler.
     }
 
-    
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onDestroy() {

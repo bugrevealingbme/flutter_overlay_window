@@ -179,28 +179,35 @@ public class FlutterOverlayWindowPlugin implements
         overlayMessageChannel.send(message, reply);
     }
 
-    private fun requestAccessibilityPermission() {
-         val intent = Intent().apply {
-            flags = FLAG_ACTIVITY_NEW_TASK
-            action = ACTION_ACCESSIBILITY_SETTINGS
+        private void requestAccessibilityPermission() {
+            Intent intent = new Intent();
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setAction(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        
+            if (context != null) {
+                context.startActivity(intent);
+            }
+        }
+        
+        private boolean isAccessibilityPermissionGranted() {
+            if (context != null) {
+                AccessibilityManager accessibilityManager = 
+                    (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        
+                String enabledServices = Settings.Secure.getString(
+                    context.getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                );
+        
+                String myServiceName = context.getPackageName() + "/net.met.control.center.OverlayService";
+        
+                // Kontrol: MyAccessibilityService etkin mi?
+                return enabledServices != null && enabledServices.contains(myServiceName) &&
+                        accessibilityManager.isEnabled();
+            }
+            return false;
         }
 
-        context!!.startActivity(intent)
-    }
-                    
-    private fun isAccessibilityPermissionGranted(): Boolean {
-        val accessibilityManager = context!!.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-    
-        val enabledServices = Settings.Secure.getString(
-            context!!.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        )
-        val myServiceName = "${context!!.packageName}/net.met.control.center.OverlayService"
-    
-        // Kontrol: MyAccessibilityService etkin mi?
-        return enabledServices?.contains(myServiceName) == true &&
-                accessibilityManager.isEnabled
-    }
         
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

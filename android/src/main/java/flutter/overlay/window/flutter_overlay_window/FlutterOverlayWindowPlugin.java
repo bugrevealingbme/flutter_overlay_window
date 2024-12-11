@@ -192,33 +192,24 @@ public class FlutterOverlayWindowPlugin implements
             }
         }
         
-private boolean isAccessibilityPermissionGranted() {
-    if (context != null) {
-        AccessibilityManager accessibilityManager = 
-            (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-
-        String enabledServices = Settings.Secure.getString(
-            context.getContentResolver(),
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        );
-
-        String myServiceName = context.getPackageName() + "/net.met.control.center.OverlayService";
-
-        if (enabledServices != null) {
-            // enabledServices'i ayır ve her birini logla
-            String[] servicesArray = enabledServices.split(":");
-            for (String service : servicesArray) {
-                Log.d("AccessibilityService", "Enabled Service: " + service);
+        private boolean isAccessibilityPermissionGranted() {
+            if (context != null) {
+                AccessibilityManager accessibilityManager = 
+                    (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        
+                String enabledServices = Settings.Secure.getString(
+                    context.getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                );
+        
+                String myServiceName = context.getPackageName() + "/flutter.overlay.window.flutter_overlay_window.OverlayService";
+        
+                // Kontrol: MyAccessibilityService etkin mi?
+                return enabledServices != null && enabledServices.contains(myServiceName) &&
+                        accessibilityManager.isEnabled();
             }
-
-            // Kontrol: MyAccessibilityService etkin mi?
-            return enabledServices.contains(myServiceName) &&
-                    accessibilityManager.isEnabled();
+            return false;
         }
-    }
-    return false;
-}
-
         
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

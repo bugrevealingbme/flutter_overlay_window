@@ -1,6 +1,6 @@
 package flutter.overlay.window.flutter_overlay_window;
 
-import android.view.accessibility.AccessibilityManager
+import android.view.accessibility.AccessibilityManager;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -66,7 +66,7 @@ public class FlutterOverlayWindowPlugin implements
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         pendingResult = result;
         if (call.method.equals("requestAccessibilityPermission")) {
-                requestAccessibilityPermission()
+                requestAccessibilityPermission();
                 result.success(null);
         } else if (call.method.equals("checkAccessibilityPermission")) {
             result.success(isAccessibilityPermissionGranted());

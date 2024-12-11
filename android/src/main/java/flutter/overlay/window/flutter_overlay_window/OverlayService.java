@@ -41,7 +41,7 @@ import io.flutter.plugin.common.BasicMessageChannel;
 import io.flutter.plugin.common.JSONMessageCodec;
 import io.flutter.plugin.common.MethodChannel;
 
-public class OverlayService extends Service implements View.OnTouchListener {
+public class OverlayService extends AccessibilityService implements View.OnTouchListener {
     private final int DEFAULT_NAV_BAR_HEIGHT_DP = 48;
     private final int DEFAULT_STATUS_BAR_HEIGHT_DP = 25;
 
@@ -69,6 +69,17 @@ public class OverlayService extends Service implements View.OnTouchListener {
     private Timer mTrayAnimationTimer;
     private TrayAnimationTimerTask mTrayTimerTask;
 
+    @Override
+    public void onAccessibilityEvent(AccessibilityEvent event) {
+        // Erişilebilirlik olaylarını burada işleyebilirsiniz.
+    }
+    
+    @Override
+    public void onInterrupt() {
+        // Servis kesintiye uğradığında yapılacak işlemler.
+    }
+
+    
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

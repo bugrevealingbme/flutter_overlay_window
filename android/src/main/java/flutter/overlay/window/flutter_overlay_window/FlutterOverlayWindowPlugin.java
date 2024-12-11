@@ -63,7 +63,11 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         pendingResult = result;
-        if (call.method.equals("checkPermission")) {
+        if (call.method.equals("requestAccessibilityPermission")) {
+            result.success(requestAccessibilityPermission());
+        } else if (call.method.equals("checkAccessibilityPermission")) {
+            result.success(isAccessibilityPermissionGranted());
+        } else if (call.method.equals("checkPermission")) {
             result.success(checkOverlayPermission());
         } else if (call.method.equals("requestPermission")) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -175,6 +179,29 @@ public class FlutterOverlayWindowPlugin implements
         overlayMessageChannel.send(message, reply);
     }
 
+    private fun requestAccessibilityPermission() {
+         val intent = Intent().apply {
+            flags = FLAG_ACTIVITY_NEW_TASK
+            action = ACTION_ACCESSIBILITY_SETTINGS
+        }
+
+        context!!.startActivity(intent)
+    }
+                    
+    private fun isAccessibilityPermissionGranted(): Boolean {
+        val accessibilityManager = context!!.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+    
+        val enabledServices = Settings.Secure.getString(
+            context!!.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )
+        val myServiceName = "${context!!.packageName}/net.met.control.center.OverlayService"
+    
+        // Kontrol: MyAccessibilityService etkin mi?
+        return enabledServices?.contains(myServiceName) == true &&
+                accessibilityManager.isEnabled
+    }
+        
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return Settings.canDrawOverlays(context);

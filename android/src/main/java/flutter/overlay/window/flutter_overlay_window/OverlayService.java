@@ -183,7 +183,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 WindowSetup.width == -1999 ? -1 : WindowSetup.width,
                 WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
                 0,
-                statusBarHeightPx(),
+                -statusBarHeightPx(),
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN

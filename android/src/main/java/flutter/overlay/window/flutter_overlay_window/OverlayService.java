@@ -86,8 +86,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 windowInfo = parentNodeInfo.getWindow();
             }
 
-            Intent intent = new Intent(ACCESSIBILITY_INTENT);
-            intent.putExtra(SEND_BROADCAST, true);
+            Intent intent = new Intent("accessibility_event");
+            intent.putExtra("SEND_BROADCAST", true);
             sendBroadcast(intent);
         } catch (Exception ex) {
             Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());

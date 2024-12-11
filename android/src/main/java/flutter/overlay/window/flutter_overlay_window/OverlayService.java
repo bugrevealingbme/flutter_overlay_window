@@ -1,5 +1,10 @@
 package flutter.overlay.window.flutter_overlay_window;
 
+import android.accessibilityservice.AccessibilityService;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;

@@ -115,7 +115,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         instance = null;
     }
 
-    public static removeOverlay() {
+    public static void removeOverlay() {
         if (windowManager != null) {
             windowManager.removeView(flutterView);
             windowManager = null;
@@ -332,7 +332,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 
     @Override
     public void onCreate() {
-        createNotificationChannel();
+        //createNotificationChannel();
         Intent notificationIntent = new Intent(this, FlutterOverlayWindowPlugin.class);
         int pendingFlags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {

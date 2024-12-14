@@ -130,6 +130,7 @@ public class FlutterOverlayWindowPlugin implements
             result.success(OverlayService.getCurrentPosition());
         } else if (call.method.equals("closeOverlay")) {
             if (OverlayService.isRunning) {
+                OverlayService.removeOverlay();
                 final Intent i = new Intent(context, OverlayService.class);
                 context.stopService(i);
                 result.success(true);

@@ -121,7 +121,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             instance.windowManager = null;
             instance.flutterView.detachFromFlutterEngine();
             instance.flutterView = null;
-            stopSelf();
+            instance.stopSelf();
         }
         
         isRunning = false;

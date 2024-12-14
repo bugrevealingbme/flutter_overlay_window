@@ -118,13 +118,16 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     public static void removeOverlay() {
         if (instance != null && instance.windowManager != null) {
             instance.windowManager.removeView(instance.flutterView);
+            instance.windowManager = null;
+            instance.flutterView.detachFromFlutterEngine();
+            instance.flutterView = null;
+            instance.stopSelf();
             isRunning = false;
         }
     
         if (instance != null) {
             NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
-            instance = null;
         }
     }
     

@@ -196,8 +196,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         int dx = startX == OverlayConstants.DEFAULT_XY ? 0 : startX;
         int dy = startY == OverlayConstants.DEFAULT_XY ? -statusBarHeightPx() : startY;
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowSetup.width == -1999 ? -1 : WindowSetup.width,
-                WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
                 0,
                 -statusBarHeightPx(),
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,

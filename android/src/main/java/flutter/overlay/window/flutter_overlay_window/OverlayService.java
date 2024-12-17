@@ -201,8 +201,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 0,
                 -statusBarHeightPx(),
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowSetup.flag | WindowManager.LayoutParams.FLAG_FULLSCREEN
-                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowSetup.flag | WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 PixelFormat.TRANSLUCENT
         );
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {

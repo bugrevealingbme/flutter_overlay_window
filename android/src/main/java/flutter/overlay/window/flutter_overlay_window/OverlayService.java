@@ -195,19 +195,24 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         }
         int dx = startX == OverlayConstants.DEFAULT_XY ? 0 : startX;
         int dy = startY == OverlayConstants.DEFAULT_XY ? -statusBarHeightPx() : startY;
- 
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
-        lp.format = PixelFormat.TRANSLUCENT;
-        lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.gravity = WindowSetup.gravity;
-        lp.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
-
+        WindowManager.LayoutParams paramss = new WindowManager.LayoutParams(
+                WindowSetup.width == -1999 ? -1 : WindowSetup.width,
+                WindowSetup.height != -1999 ? WindowSetup.height : screenHeight(),
+                0,
+                -statusBarHeightPx(),
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                PixelFormat.TRANSLUCENT
+        );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
+            paramss.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+        }
+        paramss.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);
-        windowManager.addView(flutterView, lp);
-        moveOverlay(dx, dy, null);
+        windowManager.addView(flutterView, paramss);
         return START_STICKY;
     }
 

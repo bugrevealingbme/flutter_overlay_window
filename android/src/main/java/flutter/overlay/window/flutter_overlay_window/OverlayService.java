@@ -204,6 +204,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             lp.height = WindowManager.LayoutParams.MATCH_PARENT;
             lp.gravity = Gravity.TOP;
         
+        Log.d("WindowFlags", "WindowSetup.flags: " + Integer.toBinaryString(WindowSetup.flag));
+
         flutterView.setOnTouchListener(this);
         windowManager.addView(flutterView, lp);
         moveOverlay(dx, dy, null);

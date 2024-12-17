@@ -16,7 +16,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.app.PendingIntent;
-import android.graphics.Point;
+import android.graphics.Point;ffu
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -199,7 +199,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
         lp.format = PixelFormat.TRANSLUCENT;
-        lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.MATCH_PARENT;
         lp.gravity = Gravity.TOP;

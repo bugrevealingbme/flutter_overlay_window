@@ -16,7 +16,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.app.PendingIntent;
-import android.graphics.Point;ffu
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;

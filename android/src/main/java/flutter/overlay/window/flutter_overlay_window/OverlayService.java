@@ -166,8 +166,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         flutterView.setBackgroundColor(Color.TRANSPARENT);
         flutterChannel.setMethodCallHandler((call, result) -> {
             if (call.method.equals("setBlurSettings")) {
-                int blurRadius = call.argument("blurRadius");
-                float alpha = call.argument("alpha");
+                double blurRadius = call.argument("blurRadius");
+                double alpha = call.argument("alpha");
                 setBlurSettings(blurRadius, alpha, result);
             } else if (call.method.equals("updateFlag")) {
                 String flag = call.argument("flag").toString();
@@ -269,9 +269,9 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         if (windowManager != null && flutterView != null) {
             WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                params.setBlurBehindRadius(blurRadius);
+                params.setBlurBehindRadius((float) blurRadius);
                 params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-                params.alpha = alpha;
+                params.alpha = (float) alpha;
             }
             windowManager.updateViewLayout(flutterView, params);
             result.success(true);

@@ -263,7 +263,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 
     private void setBlurSettings(int blurRadius, MethodChannel.Result result) {
         if (windowManager != null && flutterView != null) {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
+           /* WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                if (blurRadius > 0) {
                     params.setBlurBehindRadius(blurRadius);
@@ -272,7 +272,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                     params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
                 }
             }
-            windowManager.updateViewLayout(flutterView, params);
+            windowManager.updateViewLayout(flutterView, params); */
             result.success(true);
         } else {
             result.success(false);

@@ -208,9 +208,10 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 PixelFormat.TRANSLUCENT
         );
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
-            params.setBlurBehindRadius(50); // Blur radius (0 = kapalı, max: cihaz limitine bağlı)
-            params.setBackgroundBlurRadius(50); // Alternatif bulanıklık seviyesi
-            params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+            params.setBlurBehindRadius(50); // Arka blur etkisi
+            params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND; // Blur bayrağı
+            params.alpha = 0.9f; // Transparanlık
+            //params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
         }
         params.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);

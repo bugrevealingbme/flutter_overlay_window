@@ -207,10 +207,11 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                         | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT
         );
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
-            params.setBlurBehindRadius(50); // Arka blur etkisi
-            params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND; // Blur bayrağı
-            params.alpha = 0.9f; // Transparanlık
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            params.setBlurBehindRadius(50);
+            params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            params.alpha = 0.9f;
             //params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
         }
         params.gravity = WindowSetup.gravity;

@@ -269,8 +269,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                     params.setBlurBehindRadius(blurRadius);
                     params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
                 } else {
-                    // Blur sıfırlanacaksa, setBlurBehindRadius'u sıfırla ve FLAG_BLUR_BEHIND'i kaldır
-                    params.setBlurBehindRadius(0);
                     params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
                 }
             }

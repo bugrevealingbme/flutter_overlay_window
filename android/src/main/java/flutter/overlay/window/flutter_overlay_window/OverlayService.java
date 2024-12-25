@@ -210,8 +210,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                         | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT
         );
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
             params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
         }
         params.gravity = WindowSetup.gravity;
@@ -263,16 +262,18 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 
     private void setBlurSettings(int blurRadius, MethodChannel.Result result) {
         if (windowManager != null && flutterView != null) {
-           /* WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                if (blurRadius > 0) {
                     params.setBlurBehindRadius(blurRadius);
                     params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                    params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
                 } else {
                     params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                    params.alpha = 1;
                 }
             }
-            windowManager.updateViewLayout(flutterView, params); */
+            windowManager.updateViewLayout(flutterView, params); 
             result.success(true);
         } else {
             result.success(false);

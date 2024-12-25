@@ -209,9 +209,9 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         );
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && WindowSetup.flag == clickableFlag) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            params.setBlurBehindRadius(50);
+            params.setBlurBehindRadius(120);
             params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-            params.alpha = 0.9f;
+            params.alpha = 0.8f;
             //params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
         }
         params.gravity = WindowSetup.gravity;

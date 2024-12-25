@@ -121,6 +121,18 @@ class FlutterOverlayWindow {
     return _controller.stream;
   }
 
+  /// change blur
+  static Future<void> setBlurSettings(int blurRadius, double alpha) async {
+    try {
+      await _overlayChannel.invokeMethod('setBlurSettings', {
+        'blurRadius': blurRadius,
+        'alpha': alpha,
+      });
+    } on PlatformException catch (e) {
+      print('Failed to set blur settings: ${e.message}');
+    }
+  }
+
   /// Update the overlay flag while the overlay in action
   static Future<bool?> updateFlag(OverlayFlag flag) async {
     final bool? _res = await _overlayChannel

@@ -165,7 +165,11 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         flutterView.setFocusableInTouchMode(true);
         flutterView.setBackgroundColor(Color.TRANSPARENT);
         flutterChannel.setMethodCallHandler((call, result) -> {
-            if (call.method.equals("updateFlag")) {
+            if (call.method.equals("setBlurSettings")) {
+                int blurRadius = call.argument("blurRadius");
+                float alpha = call.argument("alpha");
+                setBlurSettings(blurRadius, alpha, result);
+            } else if (call.method.equals("updateFlag")) {
                 String flag = call.argument("flag").toString();
                 updateOverlayFlag(result, flag);
             } else if (call.method.equals("updateOverlayPosition")) {
@@ -261,6 +265,20 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         return mNavigationBarHeight;
     }
 
+    private void setBlurSettings(int blurRadius, float alpha, MethodChannel.Result result) {
+        if (windowManager != null && flutterView != null) {
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.setBlurBehindRadius(blurRadius);
+                params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                params.alpha = alpha;
+            }
+            windowManager.updateViewLayout(flutterView, params);
+            result.success(true);
+        } else {
+            result.success(false);
+        }
+    }
 
     private void updateOverlayFlag(MethodChannel.Result result, String flag) {
         if (windowManager != null) {

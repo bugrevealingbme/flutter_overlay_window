@@ -165,7 +165,10 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         flutterView.setFocusableInTouchMode(true);
         flutterView.setBackgroundColor(Color.TRANSPARENT);
         flutterChannel.setMethodCallHandler((call, result) -> {
-            if (call.method.equals("setBlurSettings")) {
+            if (call.method.equals("disableClickFlag")) {
+                boolean enableClick = call.argument("enableClick");
+                disableClickFlag(enableClick, result);
+            } else if (call.method.equals("setBlurSettings")) {
                 int blurRadius = call.argument("blurRadius");
                 setBlurSettings(blurRadius, result);
             } else if (call.method.equals("updateFlag")) {
@@ -272,6 +275,26 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                     params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
                     params.alpha = 1;
                 }
+            }
+            windowManager.updateViewLayout(flutterView, params); 
+            result.success(true);
+        } else {
+            result.success(false);
+        }
+    }
+
+    private void disableClickFlag(boolean enable, MethodChannel.Result result) {
+        if (windowManager != null && flutterView != null) {
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
+           if (enable) {
+                params.flags = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+                params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+            } else {
+                params.flags = WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+                params.alpha = 1;
             }
             windowManager.updateViewLayout(flutterView, params); 
             result.success(true);

@@ -48,14 +48,12 @@ class FlutterOverlayWindow {
     String overlayTitle = "overlay activated",
     String? overlayContent,
     bool enableDrag = false,
-    bool blurBackground = true,
     PositionGravity positionGravity = PositionGravity.none,
     OverlayPosition? startPosition,
   }) async {
     await _channel.invokeMethod(
       'showOverlay',
       {
-        "blurBackground": blurBackground,
         "height": height,
         "width": width,
         "alignment": alignment.name,
@@ -131,6 +129,13 @@ class FlutterOverlayWindow {
     } on PlatformException catch (e) {
       print('Failed to set blur settings: ${e.message}');
     }
+  }
+
+  /// Update the overlay flag while the overlay in action
+  static Future<bool?> disableClickFlag(bool enableClick) async {
+    final bool? _res = await _overlayChannel
+        .invokeMethod<bool?>('disableClickFlag', {'enableClick': enableClick});
+    return _res;
   }
 
   /// Update the overlay flag while the overlay in action

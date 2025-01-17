@@ -98,6 +98,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     public void onInterrupt() {
         // Servis kesintiye uğradığında yapılacak işlemler.
         removeOverlay();
+        onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

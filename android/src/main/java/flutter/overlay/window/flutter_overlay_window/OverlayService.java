@@ -218,7 +218,12 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         }
         params.gravity = WindowSetup.gravity;
         flutterView.setOnTouchListener(this);
-        windowManager.addView(flutterView, params);
+        try {
+            windowManager.addView(flutterView, params);
+        } catch (Exception e) {
+            onCreate();
+            windowManager.addView(flutterView, params);
+        }
         moveOverlay(dx, dy, null);
         return START_STICKY;
     }

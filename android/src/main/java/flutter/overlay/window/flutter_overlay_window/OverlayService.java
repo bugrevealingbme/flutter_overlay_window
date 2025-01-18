@@ -97,6 +97,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     @Override
     public void onInterrupt() {
         // Servis kesintiye uğradığında yapılacak işlemler.
+        removeOverlay();
+        onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -221,21 +223,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         try {
             windowManager.addView(flutterView, params);
         } catch (Exception e) {
-            try {
-                final int eventType = accessibilityEvent.getEventType();
-                AccessibilityNodeInfo parentNodeInfo = accessibilityEvent.getSource();
-                AccessibilityWindowInfo windowInfo = null;
-               
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    windowInfo = parentNodeInfo.getWindow();
-                }
-    
-                Intent intent = new Intent("accessibility_event");
-                intent.putExtra("SEND_BROADCAST", true);
-                sendBroadcast(intent);
-            } catch (Exception ex) {
-                Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
-            }
         }
         moveOverlay(dx, dy, null);
         return START_STICKY;

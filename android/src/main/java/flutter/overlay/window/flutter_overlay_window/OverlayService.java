@@ -93,12 +93,31 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
         }
     }
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+
+        try {
+            AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+            AccessibilityWindowInfo windowInfo = null;
+           
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                windowInfo = parentNodeInfo.getWindow();
+            }
+
+            Intent intent = new Intent("accessibility_event");
+            intent.putExtra("SEND_BROADCAST", true);
+            sendBroadcast(intent);
+        } catch (Exception ex) {
+            Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
+        }
+    }
+
     
     @Override
     public void onInterrupt() {
         // Servis kesintiye uğradığında yapılacak işlemler.
-        removeOverlay();
-        onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

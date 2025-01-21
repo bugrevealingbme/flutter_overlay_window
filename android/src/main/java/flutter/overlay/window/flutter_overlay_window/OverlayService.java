@@ -100,17 +100,19 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 
         try {
             AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-            AccessibilityWindowInfo windowInfo = null;
-           
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                windowInfo = parentNodeInfo.getWindow();
-            }
 
+            info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
+            info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
+            info.flags = AccessibilityServiceInfo.DEFAULT;
+            info.notificationTimeout = 100;
+            this.setServiceInfo(info);
+
+            // Send broadcast
             Intent intent = new Intent("accessibility_event");
             intent.putExtra("SEND_BROADCAST", true);
             sendBroadcast(intent);
         } catch (Exception ex) {
-            Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
+            Log.e("EVENT", "onServiceConnected: " + ex.getMessage());
         }
     }
 

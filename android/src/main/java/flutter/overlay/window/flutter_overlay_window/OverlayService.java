@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
-import android.accessibilityservice.AccessibilityServiceInfo;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -94,29 +93,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
         }
     }
-
-    @Override
-    protected void onServiceConnected() {
-        super.onServiceConnected();
-
-        try {
-            AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-
-            info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK;
-            info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
-            info.flags = AccessibilityServiceInfo.DEFAULT;
-            info.notificationTimeout = 100;
-            this.setServiceInfo(info);
-
-            // Send broadcast
-            Intent intent = new Intent("accessibility_event");
-            intent.putExtra("SEND_BROADCAST", true);
-            sendBroadcast(intent);
-        } catch (Exception ex) {
-            Log.e("EVENT", "onServiceConnected: " + ex.getMessage());
-        }
-    }
-
     
     @Override
     public void onInterrupt() {

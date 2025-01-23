@@ -12,7 +12,6 @@ import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.view.WindowManager;
-import android.os.PowerManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -120,10 +119,6 @@ public class FlutterOverlayWindowPlugin implements
         } else if (call.method.equals("isOverlayActive")) {
             result.success(OverlayService.isRunning);
             return;
-        } else if (call.method.equals("turnScreenOff")) {
-            turnScreenOff();
-            result.success(null);
-            return;
         } else if (call.method.equals("isOverlayActive")) {
             result.success(OverlayService.isRunning);
             return;
@@ -217,14 +212,6 @@ public class FlutterOverlayWindowPlugin implements
             return false;
         }
 
-    private void turnScreenOff() {
-        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        if (powerManager != null) {
-            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "YourApp:WakeLock");
-            wakeLock.acquire(1000); // Ekranı kapat
-            wakeLock.release();
-        }
-    }
         
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

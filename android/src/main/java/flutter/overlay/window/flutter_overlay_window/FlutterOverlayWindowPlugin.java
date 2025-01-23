@@ -218,7 +218,7 @@ public class FlutterOverlayWindowPlugin implements
         }
 
     private void turnScreenOff() {
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         if (powerManager != null) {
             PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "YourApp:WakeLock");
             wakeLock.acquire(1000); // Ekranı kapat

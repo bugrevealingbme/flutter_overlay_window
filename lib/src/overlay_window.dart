@@ -185,15 +185,6 @@ class FlutterOverlayWindow {
     return OverlayPosition.fromMap(_res);
   }
 
-  /// Screen off
-  static Future<void> turnScreenOff() async {
-    try {
-      await _channel.invokeMethod('turnScreenOff');
-    } on PlatformException catch (e) {
-      print("Failed to turn screen off: ${e.message}");
-    }
-  }
-
   /// Check if the current overlay is active
   static Future<bool> isActive() async {
     final bool? _res = await _channel.invokeMethod<bool?>('isOverlayActive');

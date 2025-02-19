@@ -149,10 +149,13 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             return START_STICKY;
         }
         //if (windowManager != null) {
-            windowManager.removeView(flutterView);
-            windowManager = null;
-            flutterView.detachFromFlutterEngine();
-            stopSelf();
+            try {
+                windowManager.removeView(flutterView);
+                windowManager = null;
+                flutterView.detachFromFlutterEngine();
+                stopSelf();
+            } catch (Exception e) {
+            }
         //}
         isRunning = true;
         Log.d("onStartCommand", "Service started");

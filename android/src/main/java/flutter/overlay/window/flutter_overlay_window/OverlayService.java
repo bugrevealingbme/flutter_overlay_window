@@ -110,8 +110,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             flutterView = null;
         }
         isRunning = false;
-        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
+        //NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        //notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         instance = null; 
     }
 
@@ -126,8 +126,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         }
     
         if (instance != null) {
-            NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
+            //NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            //notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         }
     }
     
@@ -221,26 +221,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         try {
             windowManager.addView(flutterView, params);
         } catch (Exception e) {
-            createNotificationChannel();
-            Intent notificationIntent = new Intent(this, FlutterOverlayWindowPlugin.class);
-            int pendingFlags;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                pendingFlags = PendingIntent.FLAG_IMMUTABLE;
-            } else {
-                pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
-            }
-            PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                    0, notificationIntent, pendingFlags);
-            final int notifyIcon = getDrawableResourceId("mipmap", "launcher");
-            Notification notification = new NotificationCompat.Builder(this, OverlayConstants.CHANNEL_ID)
-                    .setContentTitle(WindowSetup.overlayTitle)
-                    .setContentText(WindowSetup.overlayContent)
-                    .setSmallIcon(notifyIcon == 0 ? R.drawable.notification_icon : notifyIcon)
-                    .setContentIntent(pendingIntent)
-                    .setVisibility(WindowSetup.notificationVisibility)
-                    .build();
-            startForeground(OverlayConstants.NOTIFICATION_ID, notification);
-            instance = this;
         }
         moveOverlay(dx, dy, null);
         return START_STICKY;

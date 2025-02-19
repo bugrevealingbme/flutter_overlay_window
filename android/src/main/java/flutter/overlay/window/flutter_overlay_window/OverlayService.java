@@ -113,7 +113,10 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         instance = null;
-        AccessibilityService.disableSelf();
+
+        if (this instanceof AccessibilityService) {
+            ((AccessibilityService) this).disableSelf();
+        }
     }
 
     public static void removeOverlay() {

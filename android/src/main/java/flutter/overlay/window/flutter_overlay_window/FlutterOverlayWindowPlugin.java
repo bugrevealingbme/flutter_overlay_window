@@ -168,7 +168,6 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onDetachedFromActivityForConfigChanges() {
         this.mActivity = null;
-        context.unregisterReceiver(actionsReceiver);
     }
 
     @SuppressLint("WrongConstant")

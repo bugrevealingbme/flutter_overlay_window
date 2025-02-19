@@ -2,6 +2,7 @@ package flutter.overlay.window.flutter_overlay_window;
 
 import android.view.accessibility.AccessibilityManager;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -165,8 +166,31 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onDetachedFromActivityForConfigChanges() {
         this.mActivity = null;
+        context.unregisterReceiver(actionsReceiver);
     }
 
+    @SuppressLint("WrongConstant")
+    @Override
+    public void onListen(Object arguments, EventChannel.EventSink events) {
+        if (Utils.isAccessibilitySettingsOn(context)) {
+            /// Set up receiver
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(ACCESSIBILITY_INTENT);
+
+            accessibilityReceiver = new AccessibilityReceiver(events);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                context.registerReceiver(accessibilityReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+            }else{
+                context.registerReceiver(accessibilityReceiver, intentFilter);
+            }
+
+            /// Set up listener intent
+            Intent listenerIntent = new Intent(context, AccessibilityListener.class);
+            context.startService(listenerIntent);
+            Log.i("AccessibilityPlugin", "Started the accessibility tracking service.");
+        }
+    }
+        
     @Override
     public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
         this.mActivity = binding.getActivity();

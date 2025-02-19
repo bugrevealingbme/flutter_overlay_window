@@ -1,5 +1,7 @@
 package flutter.overlay.window.flutter_overlay_window;
 
+import android.view.accessibility.AccessibilityManager;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;

@@ -77,7 +77,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
-        try {
+        /* try {
             final int eventType = accessibilityEvent.getEventType();
             AccessibilityNodeInfo parentNodeInfo = accessibilityEvent.getSource();
             AccessibilityWindowInfo windowInfo = null;
@@ -91,7 +91,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             sendBroadcast(intent);
         } catch (Exception ex) {
             Log.e("EVENT", "onAccessibilityEvent: " + ex.getMessage());
-        }
+        } */
     }
     
     @Override

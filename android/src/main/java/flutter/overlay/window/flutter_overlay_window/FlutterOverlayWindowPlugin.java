@@ -172,7 +172,6 @@ public class FlutterOverlayWindowPlugin implements
     }
 
     @SuppressLint("WrongConstant")
-    @Override
     public void onListen(Object arguments, EventChannel.EventSink events) {
         if (isAccessibilityPermissionGranted()) {
             /// Set up receiver

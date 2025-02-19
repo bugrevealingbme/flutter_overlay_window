@@ -103,7 +103,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     @Override
     public void onDestroy() {
         Log.d("OverLay", "Destroying the overlay window service");
-        /* if (windowManager != null) {
+        if (windowManager != null) {
             windowManager.removeView(flutterView);
             windowManager = null;
             flutterView.detachFromFlutterEngine();
@@ -112,7 +112,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         isRunning = false;
         NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
-        instance = null; */
+        instance = null; 
     }
 
     public static void removeOverlay() {
@@ -148,12 +148,12 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             isRunning = false;
             return START_STICKY;
         }
-        if (windowManager != null) {
+        //if (windowManager != null) {
             windowManager.removeView(flutterView);
             windowManager = null;
             flutterView.detachFromFlutterEngine();
             stopSelf();
-        }
+        //}
         isRunning = true;
         Log.d("onStartCommand", "Service started");
         FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);

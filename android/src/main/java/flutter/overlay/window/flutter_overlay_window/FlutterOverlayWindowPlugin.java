@@ -41,7 +41,7 @@ import io.flutter.plugin.common.PluginRegistry;
 
 public class FlutterOverlayWindowPlugin implements
         FlutterPlugin, ActivityAware, BasicMessageChannel.MessageHandler, MethodCallHandler,
-        PluginRegistry.ActivityResultListener {
+        PluginRegistry.ActivityResultListener, EventChannel.StreamHandler {
 
     private MethodChannel channel;
     private Context context;
@@ -172,6 +172,7 @@ public class FlutterOverlayWindowPlugin implements
     }
 
     @SuppressLint("WrongConstant")
+    @Override
     public void onListen(Object arguments, EventChannel.EventSink events) {
         if (isAccessibilityPermissionGranted()) {
             /// Set up receiver

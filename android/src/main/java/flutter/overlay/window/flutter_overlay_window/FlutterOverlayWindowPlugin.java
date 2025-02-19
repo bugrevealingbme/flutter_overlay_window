@@ -23,6 +23,7 @@ import androidx.core.app.NotificationManagerCompat;
 import java.util.Map;
 
 import io.flutter.FlutterInjector;
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterEngineCache;
 import io.flutter.embedding.engine.FlutterEngineGroup;

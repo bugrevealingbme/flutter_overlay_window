@@ -49,6 +49,7 @@ public class FlutterOverlayWindowPlugin implements
     private BasicMessageChannel<Object> messenger;
     private Result pendingResult;
     final int REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248;
+    private AccessibilityReceiver accessibilityReceiver;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -173,10 +174,10 @@ public class FlutterOverlayWindowPlugin implements
     @SuppressLint("WrongConstant")
     @Override
     public void onListen(Object arguments, EventChannel.EventSink events) {
-        if (Utils.isAccessibilitySettingsOn(context)) {
+        if (isAccessibilityPermissionGranted()) {
             /// Set up receiver
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(ACCESSIBILITY_INTENT);
+            intentFilter.addAction("accessibility_event");
 
             accessibilityReceiver = new AccessibilityReceiver(events);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -186,7 +187,7 @@ public class FlutterOverlayWindowPlugin implements
             }
 
             /// Set up listener intent
-            Intent listenerIntent = new Intent(context, AccessibilityListener.class);
+            Intent listenerIntent = new Intent(context, OverlayService.class);
             context.startService(listenerIntent);
             Log.i("AccessibilityPlugin", "Started the accessibility tracking service.");
         }

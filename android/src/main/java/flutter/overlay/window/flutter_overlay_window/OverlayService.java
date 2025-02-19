@@ -120,8 +120,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         accessibilityInstance = null;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @Override
     public void onStop() {
         Log.d("OverLay", "onStop the overlay window service");
         if (windowManager != null) {

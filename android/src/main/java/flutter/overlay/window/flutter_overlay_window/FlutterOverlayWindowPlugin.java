@@ -1,13 +1,10 @@
 package flutter.overlay.window.flutter_overlay_window;
 
-import android.view.accessibility.AccessibilityManager;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -23,7 +20,6 @@ import androidx.core.app.NotificationManagerCompat;
 import java.util.Map;
 
 import io.flutter.FlutterInjector;
-import io.flutter.plugin.common.EventChannel;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterEngineCache;
 import io.flutter.embedding.engine.FlutterEngineGroup;
@@ -41,7 +37,7 @@ import io.flutter.plugin.common.PluginRegistry;
 
 public class FlutterOverlayWindowPlugin implements
         FlutterPlugin, ActivityAware, BasicMessageChannel.MessageHandler, MethodCallHandler,
-        PluginRegistry.ActivityResultListener, EventChannel.StreamHandler {
+        PluginRegistry.ActivityResultListener {
 
     private MethodChannel channel;
     private Context context;
@@ -169,28 +165,6 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onDetachedFromActivityForConfigChanges() {
         this.mActivity = null;
-    }
-
-    @SuppressLint("WrongConstant")
-    @Override
-    public void onListen(Object arguments, EventChannel.EventSink events) {
-        if (isAccessibilityPermissionGranted()) {
-            /// Set up receiver
-            IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction("accessibility_event");
-
-            accessibilityReceiver = new AccessibilityReceiver(events);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                context.registerReceiver(accessibilityReceiver, intentFilter, Context.RECEIVER_EXPORTED);
-            }else{
-                context.registerReceiver(accessibilityReceiver, intentFilter);
-            }
-
-            /// Set up listener intent
-            Intent listenerIntent = new Intent(context, OverlayService.class);
-            context.startService(listenerIntent);
-            Log.i("AccessibilityPlugin", "Started the accessibility tracking service.");
-        }
     }
         
     @Override

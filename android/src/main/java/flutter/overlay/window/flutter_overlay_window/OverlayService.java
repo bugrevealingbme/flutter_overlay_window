@@ -57,6 +57,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     public static final String INTENT_EXTRA_IS_CLOSE_WINDOW = "IsCloseWindow";
 
     private static OverlayService instance;
+    private static AccessibilityService accessibilityInstance;
     public static boolean isRunning = false;
     private WindowManager windowManager = null;
     private FlutterView flutterView;
@@ -78,6 +79,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
         try {
+            accessibilityInstance = this;
             final int eventType = accessibilityEvent.getEventType();
             AccessibilityNodeInfo parentNodeInfo = accessibilityEvent.getSource();
             AccessibilityWindowInfo windowInfo = null;
@@ -114,9 +116,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         instance = null;
 
-        if (this instanceof AccessibilityService) {
-            ((AccessibilityService) this).disableSelf();
-        }
+        accessibilityInstance.disableSelf();
+        accessibilityInstance = null;
     }
 
     public static void removeOverlay() {

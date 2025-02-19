@@ -110,8 +110,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             flutterView = null;
         }
         isRunning = false;
-        //NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        //notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
+        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         instance = null; 
     }
 
@@ -126,8 +126,8 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         }
     
         if (instance != null) {
-            //NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            //notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
+            NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
         }
     }
     

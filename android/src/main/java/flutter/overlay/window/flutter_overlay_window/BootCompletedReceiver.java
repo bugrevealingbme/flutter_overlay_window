@@ -15,17 +15,26 @@ public class BootCompletedReceiver extends BroadcastReceiver {
             Log.d(TAG, "Boot completed, attempting to restart overlay");
             try {
                 // Check if settings indicate overlay should be restarted on boot
-                Log.d(TAG, "Restart on boot is enabled, starting service");
-                Intent serviceIntent = new Intent(context, OverlayService.class);
-                serviceIntent.putExtra("startFromBoot", true);
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent);
+                boolean restartOnBoot = AppPreferences.getBoolean(context, "restart_on_boot", false);
+                if (restartOnBoot) {
+                    Log.d(TAG, "Restart on boot is enabled");
+                    
+                    // Instead of directly starting the service, launch the main activity first
+                    // so it can initialize the Flutter engine
+                    Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        launchIntent.putExtra("start_overlay_after_boot", true);
+                        context.startActivity(launchIntent);
+                        Log.d(TAG, "Launched main activity to initialize Flutter engine");
+                    } else {
+                        Log.e(TAG, "Could not get launch intent for package");
+                    }
                 } else {
-                    context.startService(serviceIntent);
+                    Log.d(TAG, "Restart on boot is disabled");
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Failed to start overlay service after boot: " + e.getMessage());
+                Log.e(TAG, "Failed to start overlay after boot: " + e.getMessage());
             }
         }
     }

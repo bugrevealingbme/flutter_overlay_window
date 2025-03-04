@@ -345,7 +345,7 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         });
     }
 
-    private void handleMethodCall(MethodChannel.MethodCall call, MethodChannel.Result result) {
+    private void handleMethodCall(io.flutter.plugin.common.MethodChannel.MethodCall call, MethodChannel.Result result) {
         switch (call.method) {
             case "disableClickFlag":
                 boolean enableClick = call.argument("enableClick");
@@ -802,7 +802,13 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     getDisplay().getRealMetrics(metrics);
                 } else {
-                    getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
+                    WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+                    if (wm != null) {
+                        wm.getDefaultDisplay().getRealMetrics(metrics);
+                    } else {
+                        DisplayMetrics defaultMetrics = getResources().getDisplayMetrics();
+                        metrics = defaultMetrics;
+                    }
                 }
                 szWindow.set(metrics.widthPixels, metrics.heightPixels);
             }

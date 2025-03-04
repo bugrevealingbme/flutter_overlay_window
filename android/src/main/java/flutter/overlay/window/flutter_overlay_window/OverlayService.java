@@ -122,19 +122,20 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     }
 
     public static void removeOverlay() {
-        if (instance != null && instance.windowManager != null) {
-            instance.windowManager.removeView(instance.flutterView);
-            instance.windowManager = null;
-            instance.flutterView.detachFromFlutterEngine();
-            instance.flutterView = null;
-            instance.stopSelf();
-            isRunning = false;
-        }
-
         if (instance != null) {
+            if (instance.windowManager != null && instance.flutterView != null) {
+                instance.windowManager.removeView(instance.flutterView);
+                instance.flutterView.detachFromFlutterEngine();
+                instance.flutterView = null;
+                instance.windowManager = null;
+                instance.stopSelf();
+            }
+            
             NotificationManager notificationManager = (NotificationManager) instance.getApplicationContext()
                     .getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(OverlayConstants.NOTIFICATION_ID);
+            
+            isRunning = false;
         }
     }
 
@@ -143,9 +144,18 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     public int onStartCommand(Intent intent, int flags, int startId) {
         onCreate();
         mResources = getApplicationContext().getResources();
+        
+        FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
+        if (engine == null) {
+            Log.d("OverlayService", "FlutterEngine is null, cannot start service after device restart");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        
         int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
         int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
         boolean isCloseWindow = intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
+        
         if (isCloseWindow) {
             if (windowManager != null) {
                 windowManager.removeView(flutterView);
@@ -164,12 +174,6 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         }
         isRunning = true;
         Log.d("onStartCommand", "Service started");
-        FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
-        if (engine == null) {
-            Log.e("OverlayService", "FlutterEngine is null. Cannot start overlay.");
-            stopSelf();
-            return START_NOT_STICKY;
-        }
         engine.getLifecycleChannel().appIsResumed();
         flutterView = new FlutterView(getApplicationContext(), new FlutterTextureView(getApplicationContext()));
         flutterView.attachToFlutterEngine(FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG));
@@ -238,6 +242,19 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         } catch (Exception e) {
         }
         moveOverlay(dx, dy, null);
+
+        if (intent != null && Intent.ACTION_SHUTDOWN.equals(intent.getAction())) {
+            Log.d("OverlayService", "Received shutdown intent, cleaning up resources");
+            if (windowManager != null) {
+                windowManager.removeView(flutterView);
+                windowManager = null;
+                flutterView.detachFromFlutterEngine();
+                flutterView = null;
+            }
+            isRunning = false;
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         return START_STICKY;
     }
 
@@ -364,18 +381,24 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
     }
 
     private void moveOverlay(int x, int y, MethodChannel.Result result) {
-        if (windowManager != null) {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
-            params.x = (x == -1999 || x == -1) ? -1 : dpToPx(x);
-            params.y = dpToPx(y);
-            if (windowManager != null && flutterView != null && flutterView.getWindowToken() != null) {
-                windowManager.updateViewLayout(flutterView, params);
+        try {
+            if (windowManager != null && flutterView != null) {
+                WindowManager.LayoutParams params = (WindowManager.LayoutParams) flutterView.getLayoutParams();
+                params.x = (x == -1999 || x == -1) ? -1 : dpToPx(x);
+                params.y = dpToPx(y);
+                if (windowManager != null && flutterView != null && flutterView.getWindowToken() != null) {
+                    windowManager.updateViewLayout(flutterView, params);
+                }
+                if (result != null)
+                    result.success(true);
+            } else {
+                if (result != null)
+                    result.success(false);
             }
+        } catch (Exception e) {
+            Log.e("OverlayService", "Error moving overlay: " + e.getMessage());
             if (result != null)
-                result.success(true);
-        } else {
-            if (result != null)
-                result.success(false);
+                result.error("MOVE_ERROR", e.getMessage(), null);
         }
     }
 

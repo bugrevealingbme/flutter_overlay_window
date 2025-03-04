@@ -195,11 +195,29 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
             if (engine == null) {
                 Log.d("OverlayService", "FlutterEngine is null, cannot start service after device restart");
+                
+                if ((flags & START_FLAG_REDELIVERY) != 0) {
+                    Log.d("OverlayService", "Service restarted after device reboot with null engine");
+                    stopSelf();
+                    sendRestartBroadcast();
+                    return START_NOT_STICKY;
+                }
+                
                 stopSelf();
                 return START_NOT_STICKY;
             }
             
-            boolean isCloseWindow = intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
+            if ((flags & START_FLAG_REDELIVERY) != 0) {
+                Log.d("OverlayService", "Service restarted after device reboot");
+                if (!isEngineValid(engine)) {
+                    Log.d("OverlayService", "Engine exists but is in invalid state after reboot");
+                    stopSelf();
+                    sendRestartBroadcast();
+                    return START_NOT_STICKY;
+                }
+            }
+            
+            boolean isCloseWindow = intent != null && intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
             if (isCloseWindow) {
                 removeViewSafely();
                 isRunning = false;
@@ -207,14 +225,24 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 return START_STICKY;
             }
             
-            int startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
-            int startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
+            int startX = intent != null ? intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
+            int startY = intent != null ? intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
             
             removeViewSafely();
             
             isRunning = true;
             Log.d("onStartCommand", "Service started");
-            engine.getLifecycleChannel().appIsResumed();
+            
+            try {
+                engine.getLifecycleChannel().appIsResumed();
+            } catch (Exception e) {
+                Log.e("OverlayService", "Error resuming engine: " + e.getMessage());
+                if (isAfterReboot(flags)) {
+                    stopSelf();
+                    sendRestartBroadcast();
+                    return START_NOT_STICKY;
+                }
+            }
             
             setupOverlayView(engine, startX, startY);
             
@@ -224,6 +252,9 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
         } catch (Exception e) {
             Log.e("OverlayService", "Fatal error in onStartCommand: " + e.getMessage());
             cleanupAndStop();
+            if (isAfterReboot(flags)) {
+                sendRestartBroadcast();
+            }
             return START_NOT_STICKY;
         }
     }
@@ -547,26 +578,44 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
 
     @Override
     public void onCreate() {
-        createNotificationChannel();
-        Intent notificationIntent = new Intent(this, FlutterOverlayWindowPlugin.class);
-        int pendingFlags;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            pendingFlags = PendingIntent.FLAG_IMMUTABLE;
-        } else {
-            pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        try {
+            createNotificationChannel();
+            Intent notificationIntent = new Intent(this, FlutterOverlayWindowPlugin.class);
+            int pendingFlags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                pendingFlags = PendingIntent.FLAG_IMMUTABLE;
+            } else {
+                pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+            }
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                    0, notificationIntent, pendingFlags);
+            
+            final int notifyIcon = getDrawableResourceId("mipmap", "launcher");
+            int iconToUse = notifyIcon == 0 ? R.drawable.notification_icon : notifyIcon;
+            
+            try {
+                Notification notification = new NotificationCompat.Builder(this, OverlayConstants.CHANNEL_ID)
+                        .setContentTitle(WindowSetup.overlayTitle != null ? WindowSetup.overlayTitle : "Overlay Running")
+                        .setContentText(WindowSetup.overlayContent != null ? WindowSetup.overlayContent : "Tap to return to app")
+                        .setSmallIcon(iconToUse)
+                        .setContentIntent(pendingIntent)
+                        .setVisibility(WindowSetup.notificationVisibility)
+                        .build();
+                startForeground(OverlayConstants.NOTIFICATION_ID, notification);
+            } catch (Exception e) {
+                Log.e("OverlayService", "Error creating notification: " + e.getMessage());
+                Notification fallbackNotification = new NotificationCompat.Builder(this, OverlayConstants.CHANNEL_ID)
+                        .setContentTitle("Overlay Running")
+                        .setContentText("Tap to return to app")
+                        .setSmallIcon(iconToUse)
+                        .build();
+                startForeground(OverlayConstants.NOTIFICATION_ID, fallbackNotification);
+            }
+            
+            instance = this;
+        } catch (Exception e) {
+            Log.e("OverlayService", "Error in onCreate: " + e.getMessage());
         }
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, pendingFlags);
-        final int notifyIcon = getDrawableResourceId("mipmap", "launcher");
-        Notification notification = new NotificationCompat.Builder(this, OverlayConstants.CHANNEL_ID)
-                .setContentTitle(WindowSetup.overlayTitle)
-                .setContentText(WindowSetup.overlayContent)
-                .setSmallIcon(notifyIcon == 0 ? R.drawable.notification_icon : notifyIcon)
-                .setContentIntent(pendingIntent)
-                .setVisibility(WindowSetup.notificationVisibility)
-                .build();
-        startForeground(OverlayConstants.NOTIFICATION_ID, notification);
-        instance = this;
     }
 
     private void createNotificationChannel() {
@@ -717,6 +766,80 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 }
             });
         }
+    }
+
+    private boolean isAfterReboot(int flags) {
+        return (flags & START_FLAG_REDELIVERY) != 0;
+    }
+
+    private boolean isEngineValid(FlutterEngine engine) {
+        try {
+            return engine.getDartExecutor() != null && 
+                   engine.getRenderer() != null;
+        } catch (Exception e) {
+            Log.e("OverlayService", "Engine validation failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void sendRestartBroadcast() {
+        try {
+            Intent intent = new Intent("flutter.overlay.window.RESTART_REQUIRED");
+            intent.setPackage(getPackageName());
+            sendBroadcast(intent);
+            Log.d("OverlayService", "Sent restart broadcast");
+        } catch (Exception e) {
+            Log.e("OverlayService", "Error sending restart broadcast: " + e.getMessage());
+        }
+    }
+
+    private void setupWindowSize() {
+        try {
+            if (windowManager != null) {
+                windowManager.getDefaultDisplay().getSize(szWindow);
+            } else {
+                DisplayMetrics metrics = new DisplayMetrics();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    getDisplay().getRealMetrics(metrics);
+                } else {
+                    getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
+                }
+                szWindow.set(metrics.widthPixels, metrics.heightPixels);
+            }
+        } catch (Exception e) {
+            Log.e("OverlayService", "Error setting up window size: " + e.getMessage());
+            szWindow.set(1080, 1920);
+        }
+    }
+
+    private WindowManager.LayoutParams createLayoutParams() {
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                        : WindowManager.LayoutParams.TYPE_PHONE,
+                WindowSetup.flag | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                PixelFormat.TRANSLUCENT);
+        
+        try {
+            params.gravity = WindowSetup.gravity;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && 
+                WindowSetup.flag == clickableFlag) {
+                params.alpha = MAXIMUM_OPACITY_ALLOWED_FOR_S_AND_HIGHER;
+            } else {
+                params.alpha = 1.0f;
+            }
+        } catch (Exception e) {
+            Log.e("OverlayService", "Error setting layout params: " + e.getMessage());
+            params.gravity = Gravity.TOP | Gravity.LEFT;
+            params.alpha = 1.0f;
+        }
+        
+        return params;
     }
 
 }

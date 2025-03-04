@@ -36,6 +36,11 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+
 public class FlutterOverlayWindowPlugin implements
         FlutterPlugin, ActivityAware, BasicMessageChannel.MessageHandler, MethodCallHandler,
         PluginRegistry.ActivityResultListener {
@@ -46,6 +51,21 @@ public class FlutterOverlayWindowPlugin implements
     private BasicMessageChannel<Object> messenger;
     private Result pendingResult;
     final int REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248;
+
+    private BroadcastReceiver restartReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("flutter.overlay.window.RESTART_REQUIRED".equals(intent.getAction())) {
+                Log.d("MainActivity", "Received restart broadcast, reinitializing overlay");
+                // Call your method to reinitialize the overlay
+                // This should be handled in your Flutter code via method channel
+                if (flutterEngine != null) {
+                    new MethodChannel(flutterEngine.getDartExecutor(), "overlay_channel")
+                        .invokeMethod("reinitializeOverlay", null);
+                }
+            }
+        }
+    };
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -81,44 +101,7 @@ public class FlutterOverlayWindowPlugin implements
                 result.success(true);
             }
         } else if (call.method.equals("showOverlay")) {
-            if (!checkOverlayPermission()) {
-                result.error("PERMISSION", "overlay permission is not enabled", null);
-                return;
-            }
-            Integer height = call.argument("height");
-            Integer width = call.argument("width");
-            String alignment = call.argument("alignment");
-            String flag = call.argument("flag");
-            String overlayTitle = call.argument("overlayTitle");
-            String overlayContent = call.argument("overlayContent");
-            String notificationVisibility = call.argument("notificationVisibility");
-            boolean enableDrag = call.argument("enableDrag");
-            String positionGravity = call.argument("positionGravity");
-            Map<String, Integer> startPosition = call.argument("startPosition");
-            int startX = startPosition != null ? startPosition.getOrDefault("x", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
-            int startY = startPosition != null ? startPosition.getOrDefault("y", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
-
-
-            WindowSetup.width = width != null ? width : -1;
-            WindowSetup.height = height != null ? height : -1;
-            WindowSetup.enableDrag = enableDrag;
-            WindowSetup.setGravityFromAlignment(alignment != null ? alignment : "center");
-            WindowSetup.setFlag(flag != null ? flag : "flagNotFocusable");
-            WindowSetup.overlayTitle = overlayTitle;
-            WindowSetup.overlayContent = overlayContent == null ? "" : overlayContent;
-            WindowSetup.positionGravity = positionGravity;
-            WindowSetup.setNotificationVisibility(notificationVisibility);
-
-            final Intent intent = new Intent(context, OverlayService.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            intent.putExtra("startX", startX);
-            intent.putExtra("startY", startY);
-            context.startService(intent);
-            result.success(null);
-        } else if (call.method.equals("isOverlayActive")) {
-            result.success(OverlayService.isRunning);
-            return;
+            showOverlay(call, result);
         } else if (call.method.equals("isOverlayActive")) {
             result.success(OverlayService.isRunning);
             return;
@@ -227,6 +210,95 @@ public class FlutterOverlayWindowPlugin implements
             return true;
         }
         return false;
+    }
+
+    private void showOverlay(MethodCall call, Result result) {
+        try {
+            if (FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG) == null) {
+                Log.d("FlutterOverlayPlugin", "Engine is null, trying to recreate");
+                FlutterEngineGroup enn = new FlutterEngineGroup(context);
+                DartExecutor.DartEntrypoint dEntry = new DartExecutor.DartEntrypoint(
+                        FlutterInjector.instance().flutterLoader().findAppBundlePath(),
+                        "overlayMain");
+                FlutterEngine engine = enn.createAndRunEngine(context, dEntry);
+                FlutterEngineCache.getInstance().put(OverlayConstants.CACHED_TAG, engine);
+            }
+
+            Integer height = call.argument("height");
+            Integer width = call.argument("width");
+            String alignment = call.argument("alignment");
+            String flag = call.argument("flag");
+            String overlayTitle = call.argument("overlayTitle");
+            String overlayContent = call.argument("overlayContent");
+            String notificationVisibility = call.argument("notificationVisibility");
+            boolean enableDrag = call.argument("enableDrag");
+            String positionGravity = call.argument("positionGravity");
+            Map<String, Integer> startPosition = call.argument("startPosition");
+            int startX = startPosition != null ? startPosition.getOrDefault("x", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
+            int startY = startPosition != null ? startPosition.getOrDefault("y", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
+
+            WindowSetup.width = width != null ? width : -1;
+            WindowSetup.height = height != null ? height : -1;
+            WindowSetup.enableDrag = enableDrag;
+            WindowSetup.setGravityFromAlignment(alignment != null ? alignment : "center");
+            WindowSetup.setFlag(flag != null ? flag : "flagNotFocusable");
+            WindowSetup.overlayTitle = overlayTitle;
+            WindowSetup.overlayContent = overlayContent == null ? "" : overlayContent;
+            WindowSetup.positionGravity = positionGravity;
+            WindowSetup.setNotificationVisibility(notificationVisibility);
+
+            final Intent intent = new Intent(context, OverlayService.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("startX", startX);
+            intent.putExtra("startY", startY);
+            context.startService(intent);
+            result.success(null);
+        } catch (Exception e) {
+            Log.e("FlutterOverlayPlugin", "Error showing overlay: " + e.getMessage());
+            result.error("SHOW_ERROR", e.getMessage(), null);
+        }
+    }
+
+    public static void checkBootIntent(Context context, Intent intent) {
+        if (intent != null && intent.getBooleanExtra("start_overlay_after_boot", false)) {
+            Log.d("FlutterOverlayPlugin", "Received boot start intent, initializing overlay");
+            
+            // This should be called after Flutter engine is initialized
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    // Get saved overlay settings
+                    int overlayX = AppPreferences.getInt(context, "overlay_x", OverlayConstants.DEFAULT_XY);
+                    int overlayY = AppPreferences.getInt(context, "overlay_y", OverlayConstants.DEFAULT_XY);
+                    
+                    // Start overlay with saved settings
+                    Intent serviceIntent = new Intent(context, OverlayService.class);
+                    serviceIntent.putExtra("startX", overlayX);
+                    serviceIntent.putExtra("startY", overlayY);
+                    
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent);
+                    } else {
+                        context.startService(serviceIntent);
+                    }
+                } catch (Exception e) {
+                    Log.e("FlutterOverlayPlugin", "Failed to start overlay after boot: " + e.getMessage());
+                }
+            }, 3000); // Give some time for Flutter engine to initialize
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter("flutter.overlay.window.RESTART_REQUIRED");
+        registerReceiver(restartReceiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(restartReceiver);
     }
 
 }

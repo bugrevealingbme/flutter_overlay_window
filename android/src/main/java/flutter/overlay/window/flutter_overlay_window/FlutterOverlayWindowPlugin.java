@@ -51,6 +51,7 @@ public class FlutterOverlayWindowPlugin implements
     private BasicMessageChannel<Object> messenger;
     private Result pendingResult;
     final int REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248;
+    private FlutterEngine mainFlutterEngine;
 
     private BroadcastReceiver restartReceiver = new BroadcastReceiver() {
         @Override
@@ -59,8 +60,8 @@ public class FlutterOverlayWindowPlugin implements
                 Log.d("MainActivity", "Received restart broadcast, reinitializing overlay");
                 // Call your method to reinitialize the overlay
                 // This should be handled in your Flutter code via method channel
-                if (flutterEngine != null) {
-                    new MethodChannel(flutterEngine.getDartExecutor(), "overlay_channel")
+                if (mainFlutterEngine != null) {
+                    new MethodChannel(mainFlutterEngine.getDartExecutor(), "overlay_channel")
                         .invokeMethod("reinitializeOverlay", null);
                 }
             }
@@ -70,6 +71,7 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         this.context = flutterPluginBinding.getApplicationContext();
+        this.mainFlutterEngine = flutterPluginBinding.getFlutterEngine();
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.CHANNEL_TAG);
         channel.setMethodCallHandler(this);
 
@@ -79,6 +81,10 @@ public class FlutterOverlayWindowPlugin implements
 
         WindowSetup.messenger = messenger;
         WindowSetup.messenger.setMessageHandler(this);
+        
+        // Register the broadcast receiver
+        IntentFilter filter = new IntentFilter("flutter.overlay.window.RESTART_REQUIRED");
+        context.registerReceiver(restartReceiver, filter);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -129,6 +135,15 @@ public class FlutterOverlayWindowPlugin implements
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         channel.setMethodCallHandler(null);
         WindowSetup.messenger.setMessageHandler(null);
+        
+        // Unregister the broadcast receiver
+        if (context != null) {
+            try {
+                context.unregisterReceiver(restartReceiver);
+            } catch (IllegalArgumentException e) {
+                // Receiver not registered, ignore
+            }
+        }
     }
 
     @Override
@@ -286,19 +301,6 @@ public class FlutterOverlayWindowPlugin implements
                 }
             }, 3000); // Give some time for Flutter engine to initialize
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        IntentFilter filter = new IntentFilter("flutter.overlay.window.RESTART_REQUIRED");
-        registerReceiver(restartReceiver, filter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(restartReceiver);
     }
 
 }

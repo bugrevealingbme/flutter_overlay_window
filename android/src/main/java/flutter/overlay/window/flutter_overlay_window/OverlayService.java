@@ -170,14 +170,24 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 return START_NOT_STICKY;
             }
             
+            // Check if this is a post-boot start
+            boolean isStartFromBoot = intent != null && intent.getBooleanExtra("startFromBoot", false);
+            
             FlutterEngine engine = FlutterEngineCache.getInstance().get(OverlayConstants.CACHED_TAG);
-            if (engine == null || (flags & START_FLAG_REDELIVERY) != 0 && !isEngineValid(engine)) {
-                logDebug("FlutterEngine unavailable or invalid after restart");
+            if (engine == null || !isEngineValid(engine)) {
+                logDebug("FlutterEngine unavailable or invalid");
+                if (isStartFromBoot || (flags & START_FLAG_REDELIVERY) != 0) {
+                    // After reboot or service restart, request app to reinitialize engine
+                    sendRestartBroadcast();
+                    stopSelf();
+                    return START_NOT_STICKY;
+                }
+                logError("No valid engine found", null);
                 stopSelf();
-                if ((flags & START_FLAG_REDELIVERY) != 0) sendRestartBroadcast();
                 return START_NOT_STICKY;
             }
             
+            // Rest of the method remains the same
             boolean isCloseWindow = intent != null && intent.getBooleanExtra(INTENT_EXTRA_IS_CLOSE_WINDOW, false);
             if (isCloseWindow) {
                 removeViewSafely();
@@ -186,18 +196,28 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                 return START_STICKY;
             }
             
-            int startX = intent != null ? intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
-            int startY = intent != null ? intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY) : OverlayConstants.DEFAULT_XY;
+            // Try to load saved position values if starting after boot
+            int startX = OverlayConstants.DEFAULT_XY;
+            int startY = OverlayConstants.DEFAULT_XY;
+            
+            if (intent != null) {
+                startX = intent.getIntExtra("startX", OverlayConstants.DEFAULT_XY);
+                startY = intent.getIntExtra("startY", OverlayConstants.DEFAULT_XY);
+            } else if (isStartFromBoot) {
+                // Load saved position from preferences if starting after boot
+                startX = AppPreferences.getInt(getApplicationContext(), "overlay_x", OverlayConstants.DEFAULT_XY);
+                startY = AppPreferences.getInt(getApplicationContext(), "overlay_y", OverlayConstants.DEFAULT_XY);
+            }
             
             removeViewSafely();
             isRunning = true;
-            logDebug("Service started");
+            logDebug("Service started" + (isStartFromBoot ? " after boot" : ""));
             
             try {
                 engine.getLifecycleChannel().appIsResumed();
             } catch (Exception e) {
                 logError("Error resuming engine", e);
-                if (isAfterReboot(flags)) {
+                if (isStartFromBoot || (flags & START_FLAG_REDELIVERY) != 0) {
                     stopSelf();
                     sendRestartBroadcast();
                     return START_NOT_STICKY;
@@ -207,11 +227,17 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
             setupOverlayView(engine, startX, startY);
             acquireWakeLockSafely();
             
+            // Save current position for future reboots
+            if (!isStartFromBoot) {
+                AppPreferences.saveInt(getApplicationContext(), "overlay_x", startX);
+                AppPreferences.saveInt(getApplicationContext(), "overlay_y", startY);
+            }
+            
             return START_STICKY;
         } catch (Exception e) {
             logError("Fatal error in onStartCommand", e);
             cleanupAndStop();
-            if (isAfterReboot(flags)) sendRestartBroadcast();
+            if ((flags & START_FLAG_REDELIVERY) != 0) sendRestartBroadcast();
             return START_NOT_STICKY;
         }
     }
@@ -475,6 +501,11 @@ public class OverlayService extends AccessibilityService implements View.OnTouch
                         params.x = (x == -1999 || x == -1) ? -1 : dpToPx(x);
                         params.y = dpToPx(y);
                     });
+                    
+                    // Save current position for future reboots
+                    AppPreferences.saveInt(getApplicationContext(), "overlay_x", x);
+                    AppPreferences.saveInt(getApplicationContext(), "overlay_y", y);
+                    
                     if (result != null) result.success(true);
                 } catch (IllegalArgumentException e) {
                     logError("Error moving overlay", e);

@@ -36,11 +36,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
-
 public class FlutterOverlayWindowPlugin implements
         FlutterPlugin, ActivityAware, BasicMessageChannel.MessageHandler, MethodCallHandler,
         PluginRegistry.ActivityResultListener {
@@ -51,27 +46,10 @@ public class FlutterOverlayWindowPlugin implements
     private BasicMessageChannel<Object> messenger;
     private Result pendingResult;
     final int REQUEST_CODE_FOR_OVERLAY_PERMISSION = 1248;
-    private FlutterEngine mainFlutterEngine;
-
-    private BroadcastReceiver restartReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if ("flutter.overlay.window.RESTART_REQUIRED".equals(intent.getAction())) {
-                Log.d("MainActivity", "Received restart broadcast, reinitializing overlay");
-                // Call your method to reinitialize the overlay
-                // This should be handled in your Flutter code via method channel
-                if (mainFlutterEngine != null) {
-                    new MethodChannel(mainFlutterEngine.getDartExecutor(), "overlay_channel")
-                        .invokeMethod("reinitializeOverlay", null);
-                }
-            }
-        }
-    };
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         this.context = flutterPluginBinding.getApplicationContext();
-        this.mainFlutterEngine = flutterPluginBinding.getFlutterEngine();
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.CHANNEL_TAG);
         channel.setMethodCallHandler(this);
 
@@ -81,10 +59,6 @@ public class FlutterOverlayWindowPlugin implements
 
         WindowSetup.messenger = messenger;
         WindowSetup.messenger.setMessageHandler(this);
-        
-        // Register the broadcast receiver
-        IntentFilter filter = new IntentFilter("flutter.overlay.window.RESTART_REQUIRED");
-        context.registerReceiver(restartReceiver, filter);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -135,15 +109,6 @@ public class FlutterOverlayWindowPlugin implements
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         channel.setMethodCallHandler(null);
         WindowSetup.messenger.setMessageHandler(null);
-        
-        // Unregister the broadcast receiver
-        if (context != null) {
-            try {
-                context.unregisterReceiver(restartReceiver);
-            } catch (IllegalArgumentException e) {
-                // Receiver not registered, ignore
-            }
-        }
     }
 
     @Override
@@ -272,34 +237,6 @@ public class FlutterOverlayWindowPlugin implements
         } catch (Exception e) {
             Log.e("FlutterOverlayPlugin", "Error showing overlay: " + e.getMessage());
             result.error("SHOW_ERROR", e.getMessage(), null);
-        }
-    }
-
-    public static void checkBootIntent(Context context, Intent intent) {
-        if (intent != null && intent.getBooleanExtra("start_overlay_after_boot", false)) {
-            Log.d("FlutterOverlayPlugin", "Received boot start intent, initializing overlay");
-            
-            // This should be called after Flutter engine is initialized
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                try {
-                    // Get saved overlay settings
-                    int overlayX = AppPreferences.getInt(context, "overlay_x", OverlayConstants.DEFAULT_XY);
-                    int overlayY = AppPreferences.getInt(context, "overlay_y", OverlayConstants.DEFAULT_XY);
-                    
-                    // Start overlay with saved settings
-                    Intent serviceIntent = new Intent(context, OverlayService.class);
-                    serviceIntent.putExtra("startX", overlayX);
-                    serviceIntent.putExtra("startY", overlayY);
-                    
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        context.startForegroundService(serviceIntent);
-                    } else {
-                        context.startService(serviceIntent);
-                    }
-                } catch (Exception e) {
-                    Log.e("FlutterOverlayPlugin", "Failed to start overlay after boot: " + e.getMessage());
-                }
-            }, 3000); // Give some time for Flutter engine to initialize
         }
     }
 
